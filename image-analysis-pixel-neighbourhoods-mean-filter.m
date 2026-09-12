@@ -1,123 +1,141 @@
-% Read the image
-I = imread('images/toysflash.png');
+clear;
+clc;
+close all;
 
+%% 1. Load image
+toysImage = imread('images/toysflash.png');
 
-%% QUESTION 2 - Colour Spaces
+%% 2. Convert RGB image to grayscale and double
+grayToysImage = rgb2gray(toysImage);
+doubleGrayToyImage = im2double(grayToysImage);
 
-% Display the original image
-figure('Name','Original RGB Image');
-imshow(I);
-title('Original RGB Image');
+%% 3. Crop image to a square
 
+[rows, columns] = size(doubleGrayToyImage);
 
-% RGB colour space
-figure('Name','RGB Colour Space');
-colorcloud(I, 'rgb');
-title('RGB Colour Space');
+cropSize = columns - rows;
 
+column1 = 1 + cropSize/2;
+column2 = columns - cropSize/2;
 
-% Convert RGB to HSV
-% I_hsv = rgb2hsv(I);
-% 
-% figure('Name','HSV Colour Space');
-% colorcloud(I_hsv, 'hsv');
-% title('HSV Colour Space');
-% 
-% 
-% % Convert RGB to YCbCr
-% I_ycbcr = rgb2ycbcr(I);
-% 
-% figure('Name','YCbCr Colour Space');
-% colorcloud(I_ycbcr, 'ycbcr');
-% title('YCbCr Colour Space');
-% 
-% 
-% % Convert RGB to L*a*b*
-% I_lab = rgb2lab(I);
-% 
-% figure('Name','L*a*b* Colour Space');
-% colorcloud(I_lab, 'lab');
-% title('L*a*b* Colour Space');
+squareImage = doubleGrayToyImage(:, column1:column2);
 
+%% 4. Resize image to 128 x 128
 
-%% QUESTION 3 - Split the RGB image into three channels
+imageSize = 128;
 
-[R_values, G_values, B_values] = splitRGBChannels(I);
+resizedImage = imresize(squareImage, [imageSize imageSize]);
 
+%% 5. Create padded image
+% We need 2 extra pixels on every side because the window is 5 x 5.
 
-%% QUESTION 4 - Otsu thresholding on R, G and B
+borderSize = 2;
 
-% Calculate Otsu threshold for each channel
-TR = graythresh(R_values);
-TG = graythresh(G_values);
-TB = graythresh(B_values);
+paddedSize = imageSize + 2 * borderSize;
 
-% Create binary images
-binaryImageR = imbinarize(R_values, TR);
-binaryImageG = imbinarize(G_values, TG);
-binaryImageB = imbinarize(B_values, TB);
+paddedImage = zeros(paddedSize, paddedSize);
 
-% Display the three Otsu segmentation results
-figure('Name','Otsu Thresholding - RGB Channels');
+%% Put the original 128 x 128 image in the centre
 
-subplot(1,3,1);
-imshow(binaryImageR);
-title('Otsu - R');
+paddedImage(3:130, 3:130) = resizedImage;
 
-subplot(1,3,2);
-imshow(binaryImageG);
-title('Otsu - G');
+%% Replicate the top border
 
-subplot(1,3,3);
-imshow(binaryImageB);
-title('Otsu - B');
+paddedImage(1, 3:130) = resizedImage(1, :);
+paddedImage(2, 3:130) = resizedImage(1, :);
 
+%% Replicate the bottom border
 
-%% QUESTION 5 - Convert RGB to HSV
+paddedImage(131, 3:130) = resizedImage(128, :);
+paddedImage(132, 3:130) = resizedImage(128, :);
 
-I_hsv = rgb2hsv(I);
+%% Replicate the left border
 
-% Extract the three HSV channels
-H = I_hsv(:,:,1);
-S = I_hsv(:,:,2);
-V = I_hsv(:,:,3);
+paddedImage(:, 1) = paddedImage(:, 3);
+paddedImage(:, 2) = paddedImage(:, 3);
 
+%% Replicate the right border
 
-%% QUESTION 6 - Otsu thresholding on H, S and V
+paddedImage(:, 131) = paddedImage(:, 130);
+paddedImage(:, 132) = paddedImage(:, 130);
 
-% Calculate Otsu threshold for each channel
-TH = graythresh(H);
-TS = graythresh(S);
-TV = graythresh(V);
+%% Check image sizes
 
-% Create binary images
-binaryImageH = imbinarize(H, TH);
-binaryImageS = imbinarize(S, TS);
-binaryImageV = imbinarize(V, TV);
+disp('Size of resized image:');
+disp(size(resizedImage));
 
-% Display the three Otsu segmentation results
-figure('Name','Otsu Thresholding - HSV Channels');
+disp('Size of padded image:');
+disp(size(paddedImage));
 
-subplot(1,3,1);
-imshow(binaryImageH);
-title('Otsu - H');
+%% 6. Mean filtering
 
-subplot(1,3,2);
-imshow(binaryImageS);
-title('Otsu - S');
+filteredImage = zeros(imageSize, imageSize);
 
-subplot(1,3,3);
-imshow(binaryImageV);
-title('Otsu - V');
+windowSize = 5;
 
+for row = 3:size(paddedImage, 1)-2
 
-%% QUESTION 7a - R + B Colour Segmentation
+    for column = 3:size(paddedImage, 2)-2
 
-% Interactive segmentation using Red and Blue channels
-colorseg_RB(I);
+        % Take a 5 x 5 neighbourhood
+        window = paddedImage(row-2:row+2, column-2:column+2);
 
+        % Calculate the sum of the 25 pixels
+        summation = 0;
 
-%% QUESTION 7b - S + V Colour Segmentation
+        for index = 1:numel(window)
 
-% Interactive segmentation using Saturation and Value channels
-colorseg_SV(I);
+            summation = summation + window(index);
+
+        end
+
+        % Calculate the mean
+        filteredImage(row-2, column-2) = ...
+            summation / (windowSize * windowSize);
+
+    end
+
+end
+
+%% Check filtered image size
+
+disp('Size of filtered image:');
+disp(size(filteredImage));
+
+%% 7. Calculate difference image
+
+differenceImage = resizedImage - filteredImage;
+
+%% 8. Display the results
+
+figure;
+
+tiledlayout(1,3);
+
+%% Original image
+
+nexttile;
+
+imshow(resizedImage);
+
+title('Original');
+
+%% Mean filtered image
+
+nexttile;
+
+imshow(filteredImage);
+
+title('Mean Filtered');
+
+%% Difference image
+
+nexttile;
+
+imagesc(differenceImage);
+
+axis image;
+
+colorbar;
+
+title('Difference');
