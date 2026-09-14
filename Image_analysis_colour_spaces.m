@@ -1,10 +1,12 @@
+%% COLOUR SPACES
+
 % Read the image
 I = imread('images/toysflash.png');
 
 
-%% QUESTION 2 - Colour Spaces
+%% Explore colour spaces
 
-% Display the original image
+% Original RGB image
 figure('Name','Original RGB Image');
 imshow(I);
 title('Original RGB Image');
@@ -16,48 +18,42 @@ colorcloud(I, 'rgb');
 title('RGB Colour Space');
 
 
-% Convert RGB to HSV
-% I_hsv = rgb2hsv(I);
-% 
-% figure('Name','HSV Colour Space');
-% colorcloud(I_hsv, 'hsv');
-% title('HSV Colour Space');
-% 
-% 
-% % Convert RGB to YCbCr
-% I_ycbcr = rgb2ycbcr(I);
-% 
-% figure('Name','YCbCr Colour Space');
-% colorcloud(I_ycbcr, 'ycbcr');
-% title('YCbCr Colour Space');
-% 
-% 
-% % Convert RGB to L*a*b*
-% I_lab = rgb2lab(I);
-% 
-% figure('Name','L*a*b* Colour Space');
-% colorcloud(I_lab, 'lab');
-% title('L*a*b* Colour Space');
+% HSV colour space
+figure('Name','HSV Colour Space');
+colorcloud(I, 'hsv');
+title('HSV Colour Space');
 
 
-%% QUESTION 3 - Split the RGB image into three channels
+% YCbCr colour space
+figure('Name','YCbCr Colour Space');
+colorcloud(I, 'ycbcr');
+title('YCbCr Colour Space');
+
+
+% L*a*b* colour space
+figure('Name','L*a*b* Colour Space');
+colorcloud(I, 'lab');
+title('L*a*b* Colour Space');
+
+
+%% Split RGB image into three channels
 
 [R_values, G_values, B_values] = splitRGBChannels(I);
 
 
-%% QUESTION 4 - Otsu thresholding on R, G and B
+%% Otsu thresholding on R, G and B channels
 
-% Calculate Otsu threshold for each channel
+% Calculate Otsu threshold for each RGB channel
 TR = graythresh(R_values);
 TG = graythresh(G_values);
 TB = graythresh(B_values);
 
-% Create binary images
+% Create binary segmentation images
 binaryImageR = imbinarize(R_values, TR);
 binaryImageG = imbinarize(G_values, TG);
 binaryImageB = imbinarize(B_values, TB);
 
-% Display the three Otsu segmentation results
+% Display segmentation results
 figure('Name','Otsu Thresholding - RGB Channels');
 
 subplot(1,3,1);
@@ -73,29 +69,29 @@ imshow(binaryImageB);
 title('Otsu - B');
 
 
-%% QUESTION 5 - Convert RGB to HSV
+%% Convert RGB image to HSV
 
 I_hsv = rgb2hsv(I);
 
-% Extract the three HSV channels
+% Extract HSV channels
 H = I_hsv(:,:,1);
 S = I_hsv(:,:,2);
 V = I_hsv(:,:,3);
 
 
-%% QUESTION 6 - Otsu thresholding on H, S and V
+%% Otsu thresholding on H, S and V channels
 
-% Calculate Otsu threshold for each channel
+% Calculate Otsu threshold for each HSV channel
 TH = graythresh(H);
 TS = graythresh(S);
 TV = graythresh(V);
 
-% Create binary images
+% Create binary segmentation images
 binaryImageH = imbinarize(H, TH);
 binaryImageS = imbinarize(S, TS);
 binaryImageV = imbinarize(V, TV);
 
-% Display the three Otsu segmentation results
+% Display segmentation results
 figure('Name','Otsu Thresholding - HSV Channels');
 
 subplot(1,3,1);
@@ -111,13 +107,21 @@ imshow(binaryImageV);
 title('Otsu - V');
 
 
-%% QUESTION 7a - R + B Colour Segmentation
+%% QUESTION 7 - Best single-channel segmentation
+
+% Inspect the RGB and HSV Otsu results above.
+% Select the channel where the white ball is segmented best.
+%
+% Include the best segmentation result in the lab report.
+
+
+%% QUESTION 8 - R+B segmentation
 
 % Interactive segmentation using Red and Blue channels
 colorseg_RB(I);
 
 
-%% QUESTION 7b - S + V Colour Segmentation
+%% QUESTION 8 - S+V segmentation
 
 % Interactive segmentation using Saturation and Value channels
 colorseg_SV(I);
